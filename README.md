@@ -49,18 +49,48 @@ kubectl get service prometheus-nodeport -n monitoring
 Open your web browser and go to http://public-ip-address:nodeport to access the Prometheus console, where <public-ip-address> is the public IP address of any node in the cluster and <nodeport> is the NodePort allocated for the prometheus-nodeport service.
   
 Note: If you are using a cloud-based Kubernetes service such as GKE, EKS, or AKS, you may need to configure firewall rules to allow incoming traffic to the NodePort. Also, make sure to replace monitoring with the actual namespace where the Prometheus server is deployed in case it's different.
-  
+
+## Troubleshooting Prometheus Errors
 Navigate to Prometheus console. Go to Status -->  Targets (Check if there are any errors)
 Note: Most of the errors are usually related to target endpoints being not reachable from the Prometheus server. 
+```
+kubectl logs <pod-name> -n <namespace>
+```
+Where pod-name is the name of the kube-controller-manager pod, which can be obtained from the output of kubectl get pods -n namespace
+
+From the logs above, we can see that kube-controller-manager, kube-scheduler and etcd are listening on localhost(127.0.0.1)
+Edit the config file for these components to bind on non loopback IP addresses(0.0.0.0)
   
-  From the logs above, we can see that kube-controller-manager, kube-scheduler and etcd are listening on localhost(127.0.0.1)
-  Edit the config file for these components to bind on non loopback IP addresses(0.0.0.0)
-  
-  
-If there are any issues related to following components: kube-scheduler, kube-controller-manager and etcd, check below config files. 
+check below config files. 
 ```
 /etc/kubernetes/manifests/kube-scheduler.yaml
 /etc/kubernetes/manifests/kube-controller-manager.yaml
 /etc/kubernetes/manifests/kube-apiserver.yaml
 /etc/kubernetes/manifests/etcd.yaml
 ```
+## Add Kubernestes Cluster into SolarWinds Monitoring
+Monitor a cluster manually
+Copy or create an API token (Ingestion type), found in the settings area of SolarWinds Observability. See API Tokens for details.
+Create a kubectl secret with the following command, replacing <YourK8sNamespace> with the namespace of your Kubernetes cluster and <YourApiToken> with the API token from the previous step.
+
+kubectl create secret generic solarwinds-api-token -n <YourK8sNamespace> --from-literal=SOLARWINDS_API_TOKEN=<YourApiToken>
+Create a values.yaml file with the following helm values, replacing:
+
+<YourOTelEndpoint> with your organization's OTel endpoint
+<YourPrometheusURL> with the URL of the Prometheus server
+<YourUniqueId> with a unique ID that follows the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+<YourClusterName> with the display name for the cluster entity in SolarWinds Observability
+```
+otel:
+  endpoint: <YourOTelEndpoint>:443
+  metrics:
+    prometheus: 
+      url: <YourPrometheusURL>
+cluster:
+  name: <YourClusterName>
+  uid: <YourUniqueId>
+```
+Deploy the helm chart with the values.yaml file with the following command, replacing <YourK8sNamespace> with the namespace of your Kubernetes cluster.
+
+helm repo add solarwinds https://helm.solarwinds.com && helm install -f values.yaml swo-k8s-collector solarwinds/swo-k8s-collector --namespace <YourK8sNamespace> --create-namespace
+Once collected K8s data is sent to SolarWinds Observability, Kubernetes cluster and Kubernetes node entities are created and available in the Entity Explorer and Kubernetes Overview.
