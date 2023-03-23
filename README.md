@@ -10,3 +10,42 @@ https://github.com/prometheus-operator/prometheus-operator#quickstart
 https://github.com/prometheus-operator/kube-prometheus
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
 ```
+Here we will use prometheus-community/kube-prometheus-stack. Make sure to install Helm.
+Get Helm Repository Info
+```
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+Install Helm Chart
+```
+helm install [RELEASE_NAME] prometheus-community/kube-prometheus-stack
+helm install prometheus prometheus-community/kube-prometheus-stack
+```
+Verify the prometheus pods
+```
+kubectl get pods --all-namespaces
+```
+## Access Prometheus 
+To access the Prometheus console, you can use either of the following methods:
+
+1) Using a port-forward:
+
+Run the following command to create a port-forward from your local machine to the prometheus-k8s service:
+```
+kubectl port-forward service/prometheus-k8s 9090:9090 -n monitoring
+```
+Open your web browser and go to http://localhost:9090 to access the Prometheus console.
+
+2) Using a NodePort service:
+
+Create a new NodePort service to expose the prometheus-k8s service on a public IP address and port:
+```
+kubectl expose service prometheus-k8s --type=NodePort --name=prometheus-nodeport -n monitoring
+```
+Get the NodePort allocated for the prometheus-nodeport service:
+```
+kubectl get service prometheus-nodeport -n monitoring
+```
+Open your web browser and go to http://public-ip-address:nodeport to access the Prometheus console, where <public-ip-address> is the public IP address of any node in the cluster and <nodeport> is the NodePort allocated for the prometheus-nodeport service.
+  
+Note: If you are using a cloud-based Kubernetes service such as GKE, EKS, or AKS, you may need to configure firewall rules to allow incoming traffic to the NodePort. Also, make sure to replace monitoring with the actual namespace where the Prometheus server is deployed in case it's different.
