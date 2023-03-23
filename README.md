@@ -28,7 +28,7 @@ kubectl get pods --all-namespaces
 ## Access Prometheus 
 To access the Prometheus console, you can use either of the following methods:
 
-1) Using a port-forward:
+### 1) Using a port-forward:
 
 Run the following command to create a port-forward from your local machine to the prometheus-k8s service:
 ```
@@ -36,7 +36,7 @@ kubectl port-forward service/prometheus-k8s 9090:9090 -n monitoring
 ```
 Open your web browser and go to http://localhost:9090 to access the Prometheus console.
 
-2) Using a NodePort service:
+### 2) Using a NodePort service:
 
 Create a new NodePort service to expose the prometheus-k8s service on a public IP address and port:
 ```
@@ -46,13 +46,15 @@ Get the NodePort allocated for the prometheus-nodeport service:
 ```
 kubectl get service prometheus-nodeport -n monitoring
 ```
-Open your web browser and go to http://public-ip-address:nodeport to access the Prometheus console, where <public-ip-address> is the public IP address of any node in the cluster and <nodeport> is the NodePort allocated for the prometheus-nodeport service.
+Open your web browser and go to http://public-ip-address:nodeport to access the Prometheus console
   
 Note: If you are using a cloud-based Kubernetes service such as GKE, EKS, or AKS, you may need to configure firewall rules to allow incoming traffic to the NodePort. Also, make sure to replace monitoring with the actual namespace where the Prometheus server is deployed in case it's different.
 
 ## Troubleshooting Prometheus Errors
 Navigate to Prometheus console. Go to Status -->  Targets (Check if there are any errors)
 Note: Most of the errors are usually related to target endpoints being not reachable from the Prometheus server. 
+
+Check logs for the pod having issues
 ```
 kubectl logs <pod-name> -n <namespace>
 ```
@@ -76,13 +78,7 @@ check below config files.
 ```
 kubectl create secret generic solarwinds-api-token -n <YourK8sNamespace> --from-literal=SOLARWINDS_API_TOKEN=<YourApiToken>
 ```
-Create a values.yaml file with the following helm values, replacing:
-```
-<YourOTelEndpoint> with your organization's OTel endpoint
-<YourPrometheusURL> with the URL of the Prometheus server
-<YourUniqueId> with a unique ID that follows the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-<YourClusterName> with the display name for the cluster entity in SolarWinds Observability
-```
+Create a values.yaml file with the following helm values, 
 ```
 otel:
   endpoint: <YourOTelEndpoint>:443
@@ -93,8 +89,18 @@ cluster:
   name: <YourClusterName>
   uid: <YourUniqueId>
 ```
+replacing:
+```
+<YourOTelEndpoint> with your organization's OTel endpoint
+<YourPrometheusURL> with the URL of the Prometheus server
+<YourUniqueId> with a unique ID that follows the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+<YourClusterName> with the display name for the cluster entity in SolarWinds Observability
+```
 Deploy the helm chart with the values.yaml file with the following command, replacing <YourK8sNamespace> with the namespace of your Kubernetes cluster.
 ```
 helm repo add solarwinds https://helm.solarwinds.com && helm install -f values.yaml swo-k8s-collector solarwinds/swo-k8s-collector --namespace <YourK8sNamespace> --create-namespace
 ```
 Once collected K8s data is sent to SolarWinds Observability, Kubernetes cluster and Kubernetes node entities are created and available in the Entity Explorer and Kubernetes Overview.
+  
+## More on SolarWinds k8s OTEL Configuration (Still to explore)
+https://github.com/solarwinds/swi-k8s-opentelemetry-collector
