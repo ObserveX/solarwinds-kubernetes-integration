@@ -1,7 +1,7 @@
 # solarwinds-kubernetes-integration
 
 Ensure your Kubernetes environment is set up: 
-https://github.com/soultechie/Kubernetes-cluster-setup
+https://github.com/ObserveX/Kubernetes-cluster-setup
 
 ## Install Prometheus on your K8s cluster 
 Reference: 
