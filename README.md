@@ -69,17 +69,20 @@ check below config files.
 /etc/kubernetes/manifests/etcd.yaml
 ```
 ## Add Kubernestes Cluster into SolarWinds Monitoring
-Monitor a cluster manually
-Copy or create an API token (Ingestion type), found in the settings area of SolarWinds Observability. See API Tokens for details.
-Create a kubectl secret with the following command, replacing <YourK8sNamespace> with the namespace of your Kubernetes cluster and <YourApiToken> with the API token from the previous step.
 
+1) Copy or create an API token (Ingestion type), found in the settings area of SolarWinds Observability. 
+
+2) Create a kubectl secret with the following command, replacing <YourK8sNamespace> with the namespace of your Kubernetes cluster and <YourApiToken> with the API token from the previous step.
+```
 kubectl create secret generic solarwinds-api-token -n <YourK8sNamespace> --from-literal=SOLARWINDS_API_TOKEN=<YourApiToken>
+```
 Create a values.yaml file with the following helm values, replacing:
-
+```
 <YourOTelEndpoint> with your organization's OTel endpoint
 <YourPrometheusURL> with the URL of the Prometheus server
 <YourUniqueId> with a unique ID that follows the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 <YourClusterName> with the display name for the cluster entity in SolarWinds Observability
+```
 ```
 otel:
   endpoint: <YourOTelEndpoint>:443
@@ -91,6 +94,7 @@ cluster:
   uid: <YourUniqueId>
 ```
 Deploy the helm chart with the values.yaml file with the following command, replacing <YourK8sNamespace> with the namespace of your Kubernetes cluster.
-
+```
 helm repo add solarwinds https://helm.solarwinds.com && helm install -f values.yaml swo-k8s-collector solarwinds/swo-k8s-collector --namespace <YourK8sNamespace> --create-namespace
+```
 Once collected K8s data is sent to SolarWinds Observability, Kubernetes cluster and Kubernetes node entities are created and available in the Entity Explorer and Kubernetes Overview.
